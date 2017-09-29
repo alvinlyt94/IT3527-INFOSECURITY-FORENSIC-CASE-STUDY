@@ -1,1 +1,1 @@
-# IT3527-InfoSecurity-Forensic-Case-Study
+# IT3527-INFOSECURITY-Forensic-Case-Study
