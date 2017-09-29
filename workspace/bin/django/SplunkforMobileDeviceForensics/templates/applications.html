@@ -1,0 +1,120 @@
+{% extends "splunkdj:base_with_app_bar.html" %}
+
+{% load splunkmvc %}
+
+{% block title %}Applications List Dashboard{% endblock title %}
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}{{app_name}}/custom.css" />
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}splunkjs/css/dashboard.css" />
+    <style>
+        #timerange {
+            margin-top: -23px;
+        } 
+        #searchinput{
+        	margin-top: -16px;
+        }
+        #searchbutton{
+        	margin-top: -27px;
+        }
+    </style>
+{% endblock css %}
+{% block content %}
+<div class="dashboard-body container-fluid main-section-body" data-role="main">
+    <div class="row">
+        <div class="span12 dashboard-header clearfix">
+			<h2>Applications List Dashboard</h2>
+			<table>
+				<tr>
+					<td>
+						<p>Select Serial Number:</p>
+					</td>
+					<td></td>
+					<td>
+						<p>Select Time Range:</p>
+					</td>
+					<td></td>
+					<td>
+						<p>Search Input:</p>
+					</td>
+				</tr>
+				<tr>
+					<td>{% dropdown 
+						id="serialno" 
+						managerid="dropsearch1"
+						default="*" 
+						valueField="SerialNumber"
+						value="$SerialNumber$"|token_safe %}</td>
+					<td>&nbsp;&nbsp;</td>
+					<td>{% timerange 
+						id="timerange" %}</td>
+					<td>&nbsp;&nbsp;</td>
+					<td>{% textinput 
+						id="searchinput" 
+						default=""
+						value="$searchinput$"|token_safe %}</td>
+					<td>
+						<button id="searchbutton" class="btn btn-primary">Search</button>
+					</td>
+
+				</tr>
+			</table>
+		</div>
+    </div>
+	<div class="dashboard-row">
+		<div class="dashboard-cell" style="width: 100%;">
+			<div class="dashboard-panel">
+				<div class="dashboard-element">
+					<div class="panel-head">
+						<h3>List of Applications on Device</h3>
+                    </div>
+                    <div class="panel-body">
+                    	{% table 
+                    	id="table1" 
+                    	managerid="search1"  
+                    	pageSize="50" 
+                    	wrap=True %}
+                    </div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock content%}
+
+{% block managers %}
+    {% searchmanager id="dropsearch1" search="index=smdf | dedup SerialNumber | table SerialNumber | sort SerialNumber"
+        preview=True cache=60 %}
+        
+    {% searchmanager id="search1" search="index=smdf Type=ApplicationList SerialNumber=$SerialNumber$ $searchinput$ | table SerialNumber, Application | sort SerialNumber"|token_safe 
+        preview=True cache=60 status_buckets=300 %}
+{% endblock managers %}
+{% block js %}
+<script>
+    require(["splunkjs/ready!"], function(mvc) {
+        // Add "all" choice to the serialno group
+        var dropdown = mvc.Components.getInstance("serialno");
+        dropdown.settings.set("choices", [
+            {value: "*", label: "(all)"}
+        ]);
+        
+        var search1 = mvc.Components.getInstance("search1");
+        
+        var timerange1 = mvc.Components.getInstance("timerange");
+        timerange1.on("change", function() {
+            search1.search.set(timerange1.val());
+        });
+        
+		
+        var tokens = mvc.Components.getInstance("default");
+        $("#searchbutton").on("click", function() {
+            tokens.set({
+                searchinput: searchinput.val()
+            });
+            search1.startSearch();
+        });
+        
+        
+        
+    });
+</script>
+{% endblock js %}

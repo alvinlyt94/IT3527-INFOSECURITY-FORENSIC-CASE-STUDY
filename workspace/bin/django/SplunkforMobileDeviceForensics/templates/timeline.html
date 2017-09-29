@@ -1,0 +1,225 @@
+{% extends "splunkdj:base_with_app_bar.html" %}
+
+{% load splunkmvc %}
+
+{% block title %}Timeline{% endblock title %}
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}{{app_name}}/custom.css" />
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}splunkjs/css/dashboard.css" />
+    <style>
+        #timerange {
+            margin-top: -23px;
+        } 
+        #searchinput{
+        	margin-top: -16px;
+        }
+        #searchbutton{
+        	margin-top: -27px;
+        }
+    </style>
+{% endblock css %}
+{% block content %}
+<div class="dashboard-body container-fluid main-section-body" data-role="main">
+	<div class="row">
+		<div class="span12 dashboard-header clearfix">
+			<h2>Timeline Dashboard</h2>
+			<table>
+				<tr>
+					<td>
+						<p>Select Serial Number:</p>
+					</td>
+					<td></td>
+					<td>
+						<p>Select Time Range:</p>
+					</td>
+					<td></td>
+					<td>
+						<p>Search Input:</p>
+					</td>
+				</tr>
+				<tr>
+					<td>{% dropdown 
+						id="serialno" 
+						managerid="dropsearch1"
+						default="*" 
+						valueField="SerialNumber"
+						value="$SerialNumber$"|token_safe %}</td>
+					<td>&nbsp;&nbsp;</td>
+					<td>{% timerange 
+						id="timerange" %}</td>
+					<td>&nbsp;&nbsp;</td>
+					<td>{% textinput 
+						id="searchinput" 
+						default=""
+						value="$searchinput$"|token_safe %}</td>
+					<td>
+						<button id="searchbutton" class="btn btn-primary">Search</button>
+					</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+	<div class="dashboard-row">
+		<div class="dashboard-cell" style="width: 33.3%;">
+			<div class="dashboard-panel">
+				<div class="dashboard-element">
+					<div class="panel-head">
+						<h3>Timeline Compatible Devices</h3>
+                    </div>
+                    <div class="panel-body" style="height: 322px;">
+                    	{% table 
+                    	id="table1" 
+                    	managerid="search1" %}
+                    </div>
+				</div>
+			</div>
+		</div>
+		<div class="dashboard-cell" style="width: 33.3%;">
+			<div class="dashboard-panel">
+				<div class="dashboard-element">
+					<div class="panel-head">
+						<h3>Valid Source Types in Timeline</h3>
+                    </div>
+                    <div class="panel-body" style="height: 322px;">
+                        {% checkboxgroup 
+                        id="checkboxgroup1"
+                        managerid="search2" 
+                        labelField="Type" 
+                        valueField="Type" %}
+                    </div>
+				</div>
+			</div>
+		</div>
+		<div class="dashboard-cell" style="width: 33.3%;">
+			<div class="dashboard-panel">
+				<div class="dashboard-element">
+					<div class="panel-head">
+						<h3>Events per Source Type</h3>
+                    </div>
+                    <div class="panel-body" style="height: 322px;">
+                    	{% table 
+                    	id="table2" 
+                    	managerid="search3" %}
+                    </div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="dashboard-row">
+		<div class="dashboard-cell" style="width: 100%;">
+			<div class="dashboard-panel">
+				<div class="dashboard-element">
+					<div class="panel-head">
+						<h3>Timeline of Events</h3>
+                    </div>
+                    <div class="panel-body">
+                    	{% chart 
+                    	id="chart1" 
+                    	managerid="search4" 
+                    	type="column"
+                    	height=450 %}
+                    </div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="dashboard-row">
+		<div class="dashboard-cell" style="width: 100%;">
+			<div class="dashboard-panel">
+				<div class="dashboard-element">
+					<div class="panel-head">
+						<h3>TimeLine Details</h3>
+                    </div>
+                    <div class="panel-body">
+                    	{% table 
+                    	id="table3" 
+                    	managerid="search5" 
+						wrap=True    
+                    	pageSize="50" %}
+                    </div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock content%}
+
+{% block managers %}
+    {% searchmanager id="dropsearch1" search="index=smdf | table SerialNumber | dedup SerialNumber | sort SerialNumber"
+        preview=True cache=60 %}
+        
+    {% searchmanager id="search1" search="index=smdf NOT Type=Device NOT Type=SkypeAccount NOT Type=SkypeContact NOT Type=ContactEmail NOT Type=ContactNumber NOT Type=ContactDetails NOT Type=ApplicationList | stats count by SerialNumber | sort SerialNumber | rename count as Events"
+        preview=True cache=60 %}
+        
+    {% searchmanager id="search2" search="index=smdf NOT Type=Device NOT Type=SkypeAccount NOT Type=SkypeContact NOT Type=ContactEmail NOT Type=ContactNumber NOT Type=ContactDetails NOT Type=ApplicationList | dedup Type | table Type | sort Type"
+        preview=True cache=60 %}
+        
+    {% searchmanager id="search3" search="index=smdf NOT Type=Device NOT Type=SkypeAccount NOT Type=SkypeContact NOT Type=ContactEmail NOT Type=ContactNumber NOT Type=ContactDetails NOT Type=ApplicationList | stats count by Type | sort -count | rename count as Events"
+        preview=True cache=60 %}
+        
+    {% searchmanager id="search4" search="index=smdf NOT Type=Device NOT Type=SkypeAccount NOT Type=SkypeContact NOT Type=ContactEmail NOT Type=ContactNumber NOT Type=ContactDetails NOT Type=ApplicationList SerialNumber=$SerialNumber$ Type=$Type$ $searchinput$ | timechart count by Type"|token_safe
+        preview=True cache=60 %}
+        
+    {% searchmanager id="search5" search="index=smdf NOT Type=Device NOT Type=SkypeAccount NOT Type=SkypeContact NOT Type=ContactEmail NOT Type=ContactNumber NOT Type=ContactDetails NOT Type=ApplicationList SerialNumber=$SerialNumber$ Type=$Type$ $searchinput$ | rex field=_raw \"[^=]*=\x22(?<value1>[^\x22]*)[^=]*=\x22(?<value2>[^\x22]*)[^=]*=\x22(?<value3>[^\x22]*)([^=]*=\x22(?<value4>[^\x22]*))?([^=]*=\x22(?<value5>[^\x22]*))?([^=]*=\x22(?<value6>[^\x22]*))?([^=]*=\x22(?<value7>[^\x22]*))?([^=]*=\x22(?<value8>[^\x22]*))?\" | eval content=case(Type=\"BrowserBookmark\", \"Browser bookmark - \" + value2 + \" URL: \" + value3, Type=\"BrowserHistory\", \"Browser history - \" + value2 + \" URL: \" +value3 , Type=\"BrowserState\", \"Browser tab opened - \" + value2 + \" URL: \" + value3, Type=\"CallLogs\", value4 + \" call \" + if(value4==\"Outgoing\", \"to \", \"from \") + value2 + \" duration: \" + value3, Type=\"SMS\", value3 + \" message \" + if(value3==\"Outgoing\", \"to \", \"from \") + value2 + \" - \" + value4, Type=\"SkypeConversation\", \"Skype \" + value5 + \" from \" + value2 + \"(\" + value3 + \") to Dialog(\"+ value4 + \"):  \" + if(value5==\"Text Message\", value6, \"Duration: \" + value7) , 1=1, \"empty\") | convert timeformat=\"%Y-%m-%d %H:%M:%S\" ctime(\"_time\") | table _time, SerialNumber, content | sort -_time| rename _time as \"TimeStamp\" content as \"Content Summary\""|token_safe
+        preview=True cache=60 %}
+{% endblock managers %}
+{% block js %}
+<script>
+	require(["splunkjs/ready!"], function(mvc) {
+	
+		// Add "all" choice to the serialno group
+        var dropdown = mvc.Components.getInstance("serialno");
+        dropdown.settings.set("choices", [
+            {value: "*", label: "(all)"}
+        ]);
+		
+		// Check all boxes
+		types = ["BrowserBookmark","BrowserHistory","BrowserState","BrowserSearch",
+					"CallLogs","ContactDetails","ContactEmail",
+					"ContactNumber","Device","SMS","SkypeAccount",
+					"SkypeContact","SkypeConversation"]
+		var cbg1 = mvc.Components.getInstance("checkboxgroup1");
+		cbg1.settings.set("default", types);
+
+		mvc.Components.getInstance("chart1").settings.set({
+	    	"charting.legend.placement": "bottom",
+	    	"charting.chart.stackMode": "stacked"
+		});
+        
+        var search1 = mvc.Components.getInstance("search1");
+        var search2 = mvc.Components.getInstance("search2");
+        var search3 = mvc.Components.getInstance("search3");
+        var search4 = mvc.Components.getInstance("search4");
+        var search5 = mvc.Components.getInstance("search5");
+        
+        // Applying Time Range selection to charts
+        var timerange1 = mvc.Components.getInstance("timerange");
+        timerange1.on("change", function() {
+            search1.search.set(timerange1.val());
+            search2.search.set(timerange1.val());
+            search3.search.set(timerange1.val());
+            search4.search.set(timerange1.val());
+            search5.search.set(timerange1.val());
+        });
+        
+        //Applying Search Input to charts
+        var tokens = mvc.Components.getInstance("default");
+        $("#searchbutton").on("click", function() {
+            tokens.set({
+                searchinput: searchinput.val()
+            });
+            
+            search4.startSearch();
+            search5.startSearch();
+        });
+
+		//Applying Type token to search querty
+		tokens.set({ Type: cbg1.val().join(" OR Type=")});
+        cbg1.on("change", function(){
+        	tokens.set({ 
+				Type: cbg1.val().join(" OR Type=")
+			});
+		});
+	});
+</script>
+{% endblock js %}

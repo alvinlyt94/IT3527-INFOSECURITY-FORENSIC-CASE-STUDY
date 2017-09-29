@@ -1,0 +1,11 @@
+.main-area {
+    border: 1px solid black;
+}
+
+.component-page .dashboard-cell {
+    width: 900px;
+}
+
+.panel-body p { 
+    margin: 5px;
+}

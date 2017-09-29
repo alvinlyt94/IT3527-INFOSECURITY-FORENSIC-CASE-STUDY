@@ -1,0 +1,79 @@
+{% extends "splunkdj:base_with_app_bar.html" %}
+
+{% load splunkmvc %}
+{% load splunk_wftoolkit %}
+
+{% block title %}Overview{% endblock title %}
+
+{% block css %}
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}{{app_name}}/custom.css" />
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}splunkjs/css/dashboard.css" />
+<style type="text/css">
+#mobiledevice-sunburst{
+	height: 500px;
+}
+</style>
+{% endblock css %}
+
+{% block content %}
+<div class="dashboard-body container-fluid main-section-body" data-role="main">
+	<div class="row">
+		<div class="span12 dashboard-header clearfix">
+			<h2>Overview Dashboard</h2>
+		</div>
+	</div>
+	<div class="dashboard-row">
+		<div class="dashboard-cell" style="width: 100%;">
+			<div class="dashboard-panel">
+				<div class="dashboard-element">
+					<div class="panel-head">
+						<h3>Mobile Device Events</h3>
+                    </div>
+                    <div class="panel-body">
+                    	{% sunburst
+                    		id="mobiledevice-sunburst"
+                    		managerid="search1"
+                    		valueField="count"
+                    		categoryFields="SerialNumber Type" %}
+                    </div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="dashboard-row">
+		<div class="dashboard-cell" style="width: 100%;">
+			<div class="dashboard-panel">
+				<div class="dashboard-element">
+					<div class="panel-head">
+						<h3>Mobile Devices</h3>
+                    </div>
+                    <div class="panel-body">
+                    	{% table 
+                    		id="mobiledevice-table" 
+                    		managerid="search2" 
+                    		pageSize="50" %}
+                    </div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock content%}
+
+{% block managers %}
+	{% searchmanager 
+		id="search1" 
+		search="index=smdf NOT Type=Device | stats count by SerialNumber Type"
+		cache=60
+	%}
+	
+	{% searchmanager 
+		id="search2" 
+		search="index=smdf | table _time, SerialNumber, IMEI, Model, OS, Manufacturer | where isnotnull(IMEI)"
+		cache=60
+	%}
+
+{% endblock managers %}
+
+{% block js %}
+{% endblock js %}

@@ -1,0 +1,19 @@
+<nav>
+    <view name="default" default="true"/>
+    <a href="/dj/redirector/SplunkforMobileDeviceForensics/overview">Overview</a>
+    <collection label="Phone Details">
+        <a href="/dj/redirector/SplunkforMobileDeviceForensics/contacts">Contacts</a>
+        <a href="/dj/redirector/SplunkforMobileDeviceForensics/calls">Calls</a>
+        <a href="/dj/redirector/SplunkforMobileDeviceForensics/sms">SMS</a>
+    </collection>
+
+    <collection label="Applications">
+        <a href="/dj/redirector/SplunkforMobileDeviceForensics/applications">Applications List</a>
+        <a href="/dj/redirector/SplunkforMobileDeviceForensics/browsinghabits">Browsing Habits</a>
+        <a href="/dj/redirector/SplunkforMobileDeviceForensics/skype">Skype</a>
+    </collection>
+    
+    <a href="/dj/redirector/SplunkforMobileDeviceForensics/timeline">Timeline</a>
+    
+    <view name="flashtimeline" />
+</nav>

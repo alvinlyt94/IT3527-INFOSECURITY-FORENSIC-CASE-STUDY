@@ -1,0 +1,169 @@
+{% extends "splunkdj:base_with_app_bar.html" %}
+
+{% load splunkmvc %}
+{% load splunk_wftoolkit %}
+
+{% block title %}Calls Dashboard{% endblock title %}
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}{{app_name}}/custom.css" />
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}splunkjs/css/dashboard.css" />
+    <style>
+        #timerange {
+            margin-top: -23px;
+        } 
+        #searchinput{
+        	margin-top: -16px;
+        }
+        #searchbutton{
+        	margin-top: -27px;
+        }
+		#calllogs-sunburst{
+			height: 330px;
+		}
+    </style>
+{% endblock css %}
+{% block content %}
+<div class="dashboard-body container-fluid main-section-body" data-role="main">
+    <div class="row">
+        <div class="span12 dashboard-header clearfix">
+			<h2>Calls Dashboard</h2>
+			<table>
+				<tr>
+					<td>
+						<p>Select Serial Number:</p>
+					</td>
+					<td></td>
+					<td>
+						<p>Select Time Range:</p>
+					</td>
+					<td></td>
+					<td>
+						<p>Search Input:</p>
+					</td>
+				</tr>
+				<tr>
+					<td>{% dropdown 
+						id="serialno" 
+						managerid="dropsearch1"
+						default="*" 
+						valueField="SerialNumber"
+						value="$SerialNumber$"|token_safe %}</td>
+					<td>&nbsp;&nbsp;</td>
+					<td>{% timerange 
+						id="timerange" %}</td>
+					<td>&nbsp;&nbsp;</td>
+					<td>{% textinput 
+						id="searchinput" 
+						default=""
+						value="$searchinput$"|token_safe %}</td>
+					<td>
+						<button id="searchbutton" class="btn btn-primary">Search</button>
+					</td>
+
+				</tr>
+			</table>
+		</div>
+    </div>
+	<div class="dashboard-row">
+		<div class="dashboard-cell" style="width: 30%;">
+			<div class="dashboard-panel">
+				<div class="dashboard-element">
+					<div class="panel-head">
+						<h3>Call Volume by Device</h3>
+                    </div>
+                    <div class="panel-body" style="height: 322px;">
+                    	{% sunburst
+                    		id="calllogs-sunburst"
+                    		managerid="search1"
+                    		valueField="count"
+                    		categoryFields="SerialNumber Number" %}
+                    </div>
+				</div>
+			</div>
+		</div>
+		<div class="dashboard-cell" style="width: 70%;">
+			<div class="dashboard-panel">
+				<div class="dashboard-element">
+					<div class="panel-head">
+						<h3>Call Timeline</h3>
+                    </div>
+                    <div class="panel-body" >
+                    	{% chart 
+                    	id="chart2" 
+                    	managerid="search2" 
+                    	type="line" 
+                    	height=322 %}
+                    </div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="dashboard-row">
+		<div class="dashboard-cell" style="width: 100%;">
+			<div class="dashboard-panel">
+				<div class="dashboard-element">
+					<div class="panel-head">
+						<h3>Call Logs</h3>
+                    </div>
+                    <div class="panel-body">
+                    	{% table 
+                    	id="table1" 
+                    	managerid="search3"  
+                    	pageSize="50" %}
+                    </div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock content%}
+
+{% block managers %}
+    {% searchmanager id="dropsearch1" search="index=smdf | dedup SerialNumber | table SerialNumber | sort SerialNumber"
+        preview=True cache=60 %}
+        
+    {% searchmanager id="search1" search="index=smdf Type=CallLogs | stats count by SerialNumber Number" 
+        preview=True cache=60 status_buckets=300 %}
+        
+    {% searchmanager id="search2" search="index=smdf Type=CallLogs SerialNumber=$SerialNumber$ | timechart count by SerialNumber"|token_safe 
+        preview=True cache=60 status_buckets=300 %}
+        
+    {% searchmanager id="search3" search="index=smdf Type=CallLogs SerialNumber=$SerialNumber$ $searchinput$ | table _time, SerialNumber, Number, Status, Duration | sort -_time"|token_safe 
+        preview=True cache=60 status_buckets=300 %}
+{% endblock managers %}
+{% block js %}
+<script>
+	require(["splunkjs/ready!"], function(mvc) {
+		mvc.Components.getInstance("chart2").settings.set({
+	    	"charting.legend.placement": "bottom"
+		});
+		
+		
+        // Add "all" choice to the serialno group
+        var dropdown = mvc.Components.getInstance("serialno");
+        dropdown.settings.set("choices", [
+            {value: "*", label: "(all)"}
+        ]);
+        
+        var search2 = mvc.Components.getInstance("search2");
+        var search3 = mvc.Components.getInstance("search3");
+        
+        var timerange1 = mvc.Components.getInstance("timerange");
+        timerange1.on("change", function() {
+            search2.search.set(timerange1.val());
+            search3.search.set(timerange1.val());
+        });
+        
+        var tokens = mvc.Components.getInstance("default");
+        $("#searchbutton").on("click", function() {
+            tokens.set({
+                searchinput: searchinput.val()
+            });
+            
+            search2.startSearch();
+            search3.startSearch();
+        });
+	});
+</script>
+	
+{% endblock js %}
