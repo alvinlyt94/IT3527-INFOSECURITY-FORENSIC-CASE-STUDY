@@ -1,0 +1,33 @@
+CREATE TABLE Device (deviceID INTEGER PRIMARY KEY, OS varchar(100), manufacturer varchar(100), model varchar(50), serialNumber varchar(100), IMEI varchar(50), timeExtracted varchar(25));
+
+CREATE TABLE Application (applicationID INTEGER PRIMARY KEY, deviceID INTEGER, application_name varchar(255), foreign key(deviceID) references device(deviceID));
+
+CREATE TABLE Accounts (accountID INTEGER PRIMARY KEY, deviceID INTEGER, name varchar(255), type varchar(255), foreign key(deviceID) references device(deviceID));
+
+CREATE TABLE Mail (mailID INTEGER PRIMARY KEY, accountID INTEGER, fromAddress varchar(255), toAddresses varchar(255), timestamp varchar(25), subject varchar(255), message varchar(255), foreign key(accountID) references Accounts(accountID));
+
+CREATE TABLE SkypeAccount (skypeAccountID INTEGER PRIMARY KEY, deviceID INTEGER, skypename varchar(255), fullname varchar(255), liveid_membername varchar(255), birthday varchar(255), gender varchar(10), languages varchar(10), country varchar(25), province varchar(255), city varchar(255), phone_home varchar(25), phone_office varchar(25), phone_mobile varchar(25), about_me varchar(255), emails varchar(255), lastUpdated_profile varchar(10), mood_text varchar(255), lastUpdated_mood varchar(10), foreign key(deviceID) references device(deviceID));
+
+CREATE TABLE SkypeContact (skypeContactID INTEGER PRIMARY KEY, skypeAccountID INTEGER, skypename varchar(255), fullname varchar(255), lastonline_timestamp varchar(25), birthday varchar(255), gender varchar(10), languages varchar(10), country varchar(25), province varchar(255), city varchar(255), phone_home varchar(25), phone_office varchar(25), phone_mobile varchar(25), about_me varchar(255), emails varchar(255), lastUpdated_profile varchar(25), mood_text varchar(255), foreign key(skypeAccountID) references SkypeAccount(skypeAccountID));
+
+CREATE TABLE SkypeConversation (skypeConvoID INTEGER PRIMARY KEY, skypeAccountID INTEGER, author varchar(255), author_fullname varchar(255), dialogPartner varchar(255), type varchar(25), messageContent varchar(255), callDuration INTEGER, timestamp varchar(25), foreign key(skypeAccountID) references SkypeAccount(skypeAccountID));
+
+CREATE TABLE Contact(contactID INTEGER PRIMARY KEY, deviceID INTEGER, contactName varchar(255), foreign key(deviceID) references device(deviceID));
+
+CREATE TABLE ContactEmail(contactEmailID INTEGER PRIMARY KEY, contactID INTEGER, emailType varchar(255), email varchar(100), foreign key(contactID) references Contact(contactID));
+
+CREATE TABLE ContactNumber(contactNumberID INTEGER PRIMARY KEY, contactID INTEGER, numberType varchar(20), number varchar(20), foreign key(contactID) references Contact(contactID));
+
+CREATE TABLE ContactDetails(contactDetailsID INTEGER PRIMARY KEY, contactID INTEGER, detailType varchar(20), detail varchar(255), foreign key(contactID) references Contact(contactID));
+
+CREATE TABLE CallLogs(callID INTEGER PRIMARY KEY, deviceID INTEGER, number varchar(25), duration varchar(25), timeCalled varchar(25), status varchar(25), foreign key(deviceID) references device(deviceID));
+
+CREATE TABLE SMSHistory(messageID INTEGER PRIMARY KEY, deviceID INTEGER, address varchar(255), messageType varchar(25), message TEXT, datetime varchar(50), foreign key(deviceID) references device(deviceID));
+
+CREATE TABLE BrowserHistory (browserHistoryID INTEGER PRIMARY KEY, deviceID INTEGER, browserType varchar(25), title varchar(255), URL varchar(255), lastVisited varchar(25), visitCount INTEGER, redirectURL varchar(255), foreign key(deviceID) references device(deviceID));
+
+CREATE TABLE BrowserBookmark (browserBookmarkID INTEGER PRIMARY KEY, deviceID INTEGER, browserType varchar(25), title varchar(255), URL varchar(255), dateCreated varchar(25), foreign key(deviceID) references device(deviceID));
+
+CREATE TABLE BrowserState (browserStateID INTEGER PRIMARY KEY, deviceID INTEGER, browserType varchar(25), title varchar(255), URL varchar(255), timeStamp varchar(25), foreign key(deviceID) references device(deviceID));
+
+CREATE TABLE BrowserSearch (browserSearchID INTEGER PRIMARY KEY, deviceID INTEGER, browserType varchar(25), search varchar(255), date varchar(255), foreign key(deviceID) references device(deviceID));
